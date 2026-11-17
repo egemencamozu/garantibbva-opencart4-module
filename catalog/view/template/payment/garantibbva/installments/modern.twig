@@ -2,15 +2,15 @@
 	<div class="gbbva-installment-tabs">
 		<div class="gbbva-tab-header">
 			{% for family, installment in installments %}
-				<div class="gbbva-tab-item" data-modern-card-target="{{ family }}">
+				<div class="gbbva-tab-item" data-gbbva-card-target="{{ family }}">
 					<img  height="45" src="https://cdn.paythor.com/assets/cards/{{ family }}.png" alt="{$family|escape:'html':'UTF-8'}" loading="lazy">
 				</div>
 			{% endfor %}
 		</div>
-		<div class="gbbva-tab-content" data-modern-sanalpos-tables>
+		<div class="gbbva-tab-content" data-gbbva-tables>
 			{% for family, installment in installments %}
 				{% if installment is not empty %}
-					<div class="gbbva-tab-pane" data-modern-card-content="{{ family }}">
+					<div class="gbbva-tab-pane" data-gbbva-card-content="{{ family }}">
 						<table class="gbbva-installment-table">
 							<thead>
 								<tr class="">
@@ -269,22 +269,22 @@
 
 <script type="text/javascript">
 document.addEventListener('DOMContentLoaded', function () {
-const firstTable = document.querySelector('[data-modern-card-content]');
-const firstLogo = document.querySelector('[data-modern-card-target]');
+const firstTable = document.querySelector('[data-gbbva-card-content]');
+const firstLogo = document.querySelector('[data-gbbva-card-target]');
 if (firstTable && firstLogo) {
 firstTable.classList.add('active');
 firstLogo.classList.add('active');
 }
 
-document.querySelectorAll('[data-modern-card-target]').forEach(logo => {
+document.querySelectorAll('[data-gbbva-card-target]').forEach(logo => {
 logo.addEventListener('click', function () {
-const targetCard = this.getAttribute('data-modern-card-target');
+const targetCard = this.getAttribute('data-gbbva-card-target');
 
-document.querySelectorAll('[data-modern-card-target]').forEach(el => el.classList.remove('active'));
-document.querySelectorAll('[data-modern-card-content]').forEach(el => el.classList.remove('active'));
+document.querySelectorAll('[data-gbbva-card-target]').forEach(el => el.classList.remove('active'));
+document.querySelectorAll('[data-gbbva-card-content]').forEach(el => el.classList.remove('active'));
 
 this.classList.add('active');
-document.querySelector(`[data-modern-card-content="${targetCard}"]`).classList.add('active');
+document.querySelector(`[data-gbbva-card-content="${targetCard}"]`).classList.add('active');
 });
 });
 });

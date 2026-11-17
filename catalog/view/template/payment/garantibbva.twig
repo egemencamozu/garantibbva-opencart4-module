@@ -1,23 +1,28 @@
-<div class="payment-container">
+<div class="gbbva-payment-container">
     <div class="buttons">
         <div class="end">
-            <button id="gbbva-payment-confirm" onclick="paythorPayment.handlePaymentRequest('{{ payment_url }}')" class="btn btn-primary" >
-                <span id="button-text">{{ button_confirm }}</span> 
-                <span id="loading-text" class="loading-text d-none">
+            <button id="gbbva-payment-confirm" onclick="window.gbbvaPaythorPayment.handlePaymentRequest('{{ payment_url }}')" class="btn btn-primary" >
+                <span id="gbbva-button-text">{{ button_confirm }}</span> 
+                <span id="gbbva-loading-text" class="loading-text d-none">
                     <i class="fa-solid fa-circle-notch fa-spin text-light"></i>
                 </span>
             </button>
         </div>
     </div>
 </div>
-<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
 <script>
+(function () {
+    // Onay bölümü yeniden yüklendiğinde tekrar tanımlama ve dinleyici eklemeyi önler
+    if (window.gbbvaPaythorPayment) {
+        return;
+    }
+
     const orderConfirmationUrl = '{{ order_confirmation_url }}';
     const SELECTORS = {
-        PAYMENT_IFRAME_CONTAINER: '#payment-iframe-container',
-        PAYMENT_IFRAME_CLOSE_BTN: '#payment-iframe-container-close-btn',
-        PAYMENT_MODULE: '.payment-options input[data-module-name="sanalpospro"]',
-        PAYMENT_CONTAINER: '.payment-container',
+        PAYMENT_IFRAME_CONTAINER: '#gbbva-payment-iframe-container',
+        PAYMENT_IFRAME_CLOSE_BTN: '#gbbva-payment-iframe-container-close-btn',
+        PAYMENT_MODULE: '.payment-options input[data-module-name="garantibbva"]',
+        PAYMENT_CONTAINER: '.gbbva-payment-container',
         PAYMENT_CONFIRMATION: '#payment-confirmation'
     };
 
@@ -47,8 +52,8 @@
             
             try {
                 $("#gbbva-payment-confirm").prop("disabled", true); // Butonu devre dışı bırak
-                $("#button-text").addClass("d-none"); // Normal metni gizle
-                $("#loading-text").removeClass("d-none");
+                $("#gbbva-button-text").addClass("d-none"); // Normal metni gizle
+                $("#gbbva-loading-text").removeClass("d-none");
                 $.ajax({
                     url: requestUrl,
                     type: 'POST',
@@ -67,8 +72,8 @@
                     },
                     complete: function(data) {
                         $("#gbbva-payment-confirm").prop("disabled", false); // Butonu tekrar aktif et
-                        $("#button-text").removeClass("d-none");
-                        $("#loading-text").addClass("d-none");
+                        $("#gbbva-button-text").removeClass("d-none");
+                        $("#gbbva-loading-text").addClass("d-none");
                     }
                 });
             } catch (error) {
@@ -101,10 +106,10 @@
 
         showPaymentIframe(paymentLink) {
             const iframeHTML = `
-            <div id="payment-iframe-container" class="gbbva-iframe-container">
+            <div id="gbbva-payment-iframe-container" class="gbbva-iframe-container">
                 <div class="gbbva-iframe-wrapper">
                     <div class="gbbva-iframe-header">
-                    <button type="button" class="gbbva-close-iframe" onclick="document.getElementById('payment-iframe-container').remove()">
+                    <button type="button" class="gbbva-close-iframe" onclick="document.getElementById('gbbva-payment-iframe-container').remove()">
                         ×            
                     </button>
                     </div>
@@ -132,11 +137,17 @@
     }
 
     // Initialize the payment handler
-    const paythorPayment = new PaymentHandler();
+    window.gbbvaPaythorPayment = new PaymentHandler();
 
     // list post message
     window.addEventListener('message', function (event) {
         if (event.origin === 'https://pay.paythor.com' || event.origin === 'https://dev-pay.paythor.com') {
+            // Sadece Garanti BBVA ödeme penceresi açıkken işle; aynı sayfadaki
+            // başka ödeme modüllerinin dinleyicileri bu mesaja tepki vermesin
+            if (!document.querySelector(SELECTORS.PAYMENT_IFRAME_CONTAINER)) {
+                return;
+            }
+            event.stopImmediatePropagation();
             if (event.data.isSuccess) {
                 // ESC tuşunu devre dışı bırak
                 document.addEventListener('keydown', function(e) {
@@ -173,7 +184,7 @@
                 });
             }
         }
-    }, false);
+    }, true);
 
     // Add styles for the iframe overlay
     const styles = `
@@ -260,4 +271,5 @@
     const styleSheet = document.createElement('style');
     styleSheet.textContent = styles;
     document.head.appendChild(styleSheet);
+})();
 </script>
