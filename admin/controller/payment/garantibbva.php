@@ -136,23 +136,26 @@ class Garantibbva extends \Opencart\System\Engine\Controller
         $order_id = $this->request->get['order_id'];
         $this->load->model('sale/order');
         $order = $this->model_sale_order->getOrder($order_id);
-        if (empty($order) || $order['payment_method']['code'] != 'garantibbva.garantibbva' || $order['payment_method']['code'] != 'garantibbva') {
+        if (empty($order) || ($order['payment_method']['code'] != 'garantibbva.garantibbva' && $order['payment_method']['code'] != 'garantibbva')) {
             return;
         }
 
         $order_history = $this->model_sale_order->getHistories($order_id);
-        $last_history = [];
-        if (!empty($order_history)) {
-            $last_history = $order_history[0];
+        $garantibbva_history = null;
+        foreach ($order_history as $history) {
+            if (strpos($history['comment'], 'Garanti BBVA') !== false) {
+                $garantibbva_history = $history;
+                break;
+            }
         }
-        if (empty($last_history) || !strpos($last_history['comment'], 'Garanti BBVA')) {
+        if (empty($garantibbva_history)) {
             return;
         }
         $transaction_id = '';
-        if (!empty($last_history['comment'])) {
-            $comment_parts = explode(' ', trim($last_history['comment']));
-            $transaction_id = end($comment_parts);
+        if (preg_match('/Garanti BBVA\s+(\S+)/', $garantibbva_history['comment'], $matches)) {
+            $transaction_id = $matches[1];
         }
+
         try {
             if (empty($transaction_id)) {
                 return;
