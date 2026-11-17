@@ -132,7 +132,7 @@ class Garantibbva extends \Opencart\System\Engine\Controller
 
     public function addOrderInfo(&$route, &$data, &$output)
     {
-        $this->load->language('extension/garantibbva/payment/garantibbva');
+        $this->load->language('extension/garantibbva/payment/garantibbva', 'garantibbva');
         $order_id = $this->request->get['order_id'];
         $this->load->model('sale/order');
         $order = $this->model_sale_order->getOrder($order_id);
@@ -166,30 +166,31 @@ class Garantibbva extends \Opencart\System\Engine\Controller
             $payment_info = \Eticsoft\Garantibbva\Payment::getByToken($transaction_id);
             if ($payment_info['status'] == 'success') {
                 $transaction_data = $payment_info['data']['transaction'];
-                $order_data['order_status'] = $this->language->get('text_payment_' . $transaction_data['status']);
+                $order_data['order_status'] = $this->language->get('garantibbva_text_payment_' . $transaction_data['status']);
                 $order_data['transaction'] = $transaction_data;
                 $order_data['logo'] = (($payment_info['data']['program'])['theme'])['logo_url'];
                 if ($transaction_data['gateway_fee'] > 0) {
                     $order_data['process_fee'] = $transaction_data['gateway_fee'];
-                    $order_data['text_process_fee'] = $this->language->get('text_process_fee');
+                    $order_data['text_process_fee'] = $this->language->get('garantibbva_text_process_fee');
                 }
             }
         } catch (\Exception $e) {
             $order_data['error'] = $e->getMessage();
         }
-        $order_data['warning_message'] = $this->language->get('text_warning_message');
-        $order_data['process_detail'] = $this->language->get('text_process_detail');
-        $order_data['process_value'] = $this->language->get('text_process_value');
-        $order_data['text_process_detail'] = $this->language->get('text_process_detail');
-        $order_data['text_process_value'] = $this->language->get('text_process_value');
-        $order_data['text_order_status'] = $this->language->get('text_order_status');
-        $order_data['text_order_id'] = $this->language->get('text_order_id');
-        $order_data['text_amount'] = $this->language->get('text_amount');
-        $order_data['text_currency'] = $this->language->get('text_currency');
-        $order_data['text_installment'] = $this->language->get('text_installment');
-        $order_data['text_process_fee'] = $this->language->get('text_process_fee');
-        $order_data['text_no_installment'] = $this->language->get('text_no_installment');
-        $order_data['text_created_at'] = $this->language->get('text_created_at');
+        $order_data['warning_message'] = $this->language->get('garantibbva_text_warning_message');
+        $order_data['process_detail'] = $this->language->get('garantibbva_text_process_detail');
+        $order_data['process_value'] = $this->language->get('garantibbva_text_process_value');
+        $order_data['text_process_detail'] = $this->language->get('garantibbva_text_process_detail');
+        $order_data['text_process_value'] = $this->language->get('garantibbva_text_process_value');
+        $order_data['text_order_status'] = $this->language->get('garantibbva_text_order_status');
+        $order_data['text_order_id'] = $this->language->get('garantibbva_text_order_id');
+        $order_data['text_amount'] = $this->language->get('garantibbva_text_amount');
+        $order_data['text_currency'] = $this->language->get('garantibbva_text_currency');
+        $order_data['text_installment'] = $this->language->get('garantibbva_text_installment');
+        $order_data['text_process_fee'] = $this->language->get('garantibbva_text_process_fee');
+        $order_data['text_no_installment'] = $this->language->get('garantibbva_text_no_installment');
+        $order_data['text_created_at'] = $this->language->get('garantibbva_text_created_at');
+        $order_data['text_captured'] = $this->language->get('garantibbva_text_captured');
         $content = $this->load->view('extension/garantibbva/payment/garantibbva/order/order_info', $order_data);
         $data['tabs'][] = [
             'code' => 'garantibbva_order_info',
