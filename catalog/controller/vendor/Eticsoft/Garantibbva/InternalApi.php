@@ -2,7 +2,7 @@
 
 /**
  * Class InternalApi 
- * @package Eticsoft\Sanalpospro
+ * @package Eticsoft\Garantibbva
  * @description InternalApi class is used to handle the internal api requests 
  * from the module admin UI. 
  * @version 1.0
@@ -11,22 +11,22 @@
  * @license MIT
  */
 
-namespace Eticsoft\Sanalpospro;
+namespace Eticsoft\Garantibbva;
 
-use Eticsoft\Sanalpospro\EticConfig;
-use Eticsoft\Sanalpospro\EticTools;
-use Eticsoft\Sanalpospro\Payment;
-use Eticsoft\Sanalpospro\ApiClient;
+use Eticsoft\Garantibbva\EticConfig;
+use Eticsoft\Garantibbva\EticTools;
+use Eticsoft\Garantibbva\Payment;
+use Eticsoft\Garantibbva\ApiClient;
 
-use Eticsoft\Common\Models\Cart;
-use Eticsoft\Common\Models\Payer;
-use Eticsoft\Common\Models\Order;
-use Eticsoft\Common\Models\Invoice;
-use Eticsoft\Common\Models\Address;
-use Eticsoft\Common\Models\Shipping;
-use Eticsoft\Common\Models\PaymentRequest;
-use Eticsoft\Common\Models\PaymentModel;
-use Eticsoft\Common\Models\CartItem;
+use Eticsoft\Garantibbva\Common\Models\Cart;
+use Eticsoft\Garantibbva\Common\Models\Payer;
+use Eticsoft\Garantibbva\Common\Models\Order;
+use Eticsoft\Garantibbva\Common\Models\Invoice;
+use Eticsoft\Garantibbva\Common\Models\Address;
+use Eticsoft\Garantibbva\Common\Models\Shipping;
+use Eticsoft\Garantibbva\Common\Models\PaymentRequest;
+use Eticsoft\Garantibbva\Common\Models\PaymentModel;
+use Eticsoft\Garantibbva\Common\Models\CartItem;
 
 
 

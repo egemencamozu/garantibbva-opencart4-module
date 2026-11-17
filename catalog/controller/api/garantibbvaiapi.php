@@ -4,7 +4,7 @@ namespace Opencart\Catalog\Controller\Extension\Garantibbva\Api;
 
 include_once DIR_EXTENSION . 'garantibbva/catalog/controller/vendor/include.php';
 
-use Eticsoft\Sanalpospro\InternalApi;
+use Eticsoft\Garantibbva\InternalApi;
 
 class Garantibbvaiapi extends \Opencart\System\Engine\Controller {
     public function index() {

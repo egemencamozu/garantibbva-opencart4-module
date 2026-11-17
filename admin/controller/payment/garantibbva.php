@@ -8,7 +8,7 @@ error_reporting(E_ALL);
 
 include_once DIR_EXTENSION . 'garantibbva/catalog/controller/vendor/include.php';
 
-use Eticsoft\Sanalpospro\InternalApi;
+use Eticsoft\Garantibbva\InternalApi;
 
 class Garantibbva extends \Opencart\System\Engine\Controller
 {
@@ -159,8 +159,8 @@ class Garantibbva extends \Opencart\System\Engine\Controller
             }
             $this->load->model('setting/setting');
             $settings = $this->model_setting_setting;
-            \Eticsoft\Sanalpospro\EticConfig::setSettings($settings);
-            $payment_info = \Eticsoft\Sanalpospro\Payment::getByToken($transaction_id);
+            \Eticsoft\Garantibbva\EticConfig::setSettings($settings);
+            $payment_info = \Eticsoft\Garantibbva\Payment::getByToken($transaction_id);
             if ($payment_info['status'] == 'success') {
                 $transaction_data = $payment_info['data']['transaction'];
                 $order_data['order_status'] = $this->language->get('text_payment_' . $transaction_data['status']);

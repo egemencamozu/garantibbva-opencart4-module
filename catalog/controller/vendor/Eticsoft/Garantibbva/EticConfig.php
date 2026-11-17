@@ -1,5 +1,5 @@
 <?php
-namespace Eticsoft\Sanalpospro;
+namespace Eticsoft\Garantibbva;
 
 class EticConfig
 {

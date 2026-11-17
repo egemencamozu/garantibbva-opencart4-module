@@ -1,6 +1,6 @@
 <?php
 
-namespace Eticsoft\Sanalpospro;
+namespace Eticsoft\Garantibbva;
 
 class Payment
 {
