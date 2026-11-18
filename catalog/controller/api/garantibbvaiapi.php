@@ -23,6 +23,11 @@ class Garantibbvaiapi extends \Opencart\System\Engine\Controller {
             header('HTTP/1.0 403 Forbidden'); 
             die(json_encode(['status' => 'error', 'message' => 'Access denied 2']));
         }
+        if (!in_array(EticTools::postVal('iapi_action', ''), ['createPaymentLink', 'confirmOrder'], true)) {
+            header('Content-Type: application/json');
+            header('HTTP/1.0 403 Forbidden');
+            die(json_encode(['status' => 'error', 'message' => 'Access denied']));
+        }
         $this->load->model('setting/setting');
         $settings = $this->model_setting_setting;
         $api = InternalApi::getInstance()->setSettings($settings)->setController($this)->run();
