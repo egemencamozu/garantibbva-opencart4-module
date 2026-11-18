@@ -13,7 +13,7 @@ class Payment
     public static function validatePayment($token)
     {
         $apiClient = ApiClient::getInstanse();
-        return $apiClient->get('/process/getbytoken/' . $token);
+        return $apiClient->get('/process/getbytoken/' . rawurlencode($token));
     }
 
     public static function getByToken($token)

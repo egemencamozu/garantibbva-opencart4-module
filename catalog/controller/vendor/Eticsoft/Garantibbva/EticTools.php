@@ -85,6 +85,20 @@ class EticTools
         return !empty($order) && (int) $order['order_status_id'] === self::getPaidOrderStatusId();
     }
 
+    public static function getOrderPaymentCode($order)
+    {
+        // OpenCart 4.0.2.0+ stores the payment method as an array, older 4.0 versions use payment_code
+        if (isset($order['payment_method']) && is_array($order['payment_method'])) {
+            return (string) ($order['payment_method']['code'] ?? '');
+        }
+        return (string) ($order['payment_code'] ?? '');
+    }
+
+    public static function isGarantibbvaOrder($order)
+    {
+        return !empty($order) && in_array(self::getOrderPaymentCode($order), ['garantibbva', 'garantibbva.garantibbva'], true);
+    }
+
     public static function getOrderInstance()
     {
         self::$controller->load->model('checkout/order');
@@ -149,6 +163,43 @@ class EticTools
         $db->query("DELETE FROM `" . DB_PREFIX . "garantibbva_session` WHERE order_id = '" . (int)$order_id . "'");
     }
 
+    private static function createPaymentTokenTable()
+    {
+        self::getDb()->query("CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "garantibbva_payment_token` (
+            `payment_token` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+            `order_id` INT(11) NOT NULL,
+            `date_added` DATETIME NOT NULL,
+            PRIMARY KEY (`payment_token`),
+            KEY `order_id` (`order_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8");
+    }
+
+    public static function isValidPaymentToken($payment_token)
+    {
+        return is_string($payment_token) && preg_match('/^[A-Za-z0-9]{1,64}$/', $payment_token) === 1;
+    }
+
+    public static function savePaymentToken($order_id, $payment_token)
+    {
+        self::createPaymentTokenTable();
+        $db = self::getDb();
+        $db->query("INSERT IGNORE INTO `" . DB_PREFIX . "garantibbva_payment_token` SET
+            payment_token = '" . $db->escape($payment_token) . "',
+            order_id = '" . (int)$order_id . "',
+            date_added = NOW()");
+    }
+
+    public static function isPaymentTokenOfOrder($order_id, $payment_token)
+    {
+        if (!self::isValidPaymentToken($payment_token)) {
+            return false;
+        }
+        self::createPaymentTokenTable();
+        $db = self::getDb();
+        $result = $db->query("SELECT order_id FROM `" . DB_PREFIX . "garantibbva_payment_token` WHERE payment_token = '" . $db->escape($payment_token) . "' AND order_id = '" . (int)$order_id . "'");
+        return $result->num_rows > 0;
+    }
+
     public static function getCartItems()
     {
         return self::$controller->model_checkout_cart->getProducts();
@@ -188,6 +239,13 @@ class EticTools
     public static function getAmountCurrencyFormated($amount, $currency = null)
     {
         return self::$controller->currency->format($amount, $currency ?? self::getCurrency(), false, false);
+    }
+
+    public static function getOrderTotalInOrderCurrency($order)
+    {
+        // Uses the currency rate saved with the order; returns null for an unknown currency
+        $total = self::$controller->currency->format((float) $order['total'], (string) $order['currency_code'], (float) $order['currency_value'], false);
+        return $total === '' ? null : (float) $total;
     }
 
     public static function getShippingCost()
@@ -230,6 +288,11 @@ class EticTools
             !empty(self::$controller->config->get('payment_garantibbva_order_status')) ? self::$controller->config->get('payment_garantibbva_order_status') : 2,
             self::$controller->language->get('payment_success') . ' Garanti BBVA ' . $payment_token . ' ' . $flowType
         );
+    }
+
+    public static function logConfirmFailure($order_id, $reason)
+    {
+        self::$controller->log->write('Garanti BBVA: order ' . (int)$order_id . ' not confirmed (' . $reason . ')');
     }
 
     public static function getLink($route)

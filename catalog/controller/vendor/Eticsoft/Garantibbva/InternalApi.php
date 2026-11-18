@@ -195,7 +195,7 @@ class InternalApi
                 $this->setResponse('error', 'Order not found');
                 return $this;
             }
-            if ($order['payment_method']['code'] != 'garantibbva.garantibbva' && $order['payment_method']['code'] != 'garantibbva') {
+            if (!EticTools::isGarantibbvaOrder($order)) {
                 $this->setResponse('error', 'Payment method not found');
                 return $this;
             }
@@ -357,6 +357,15 @@ class InternalApi
             EticTools::saveOrderSessionId($order_id);
             $result = Payment::createPayment($paymentRequest->toArray());
 
+            if (isset($result['status']) && $result['status'] == 'success') {
+                $payment_token = $result['data']['payment_token'] ?? '';
+                if (!EticTools::isValidPaymentToken($payment_token)) {
+                    $this->setResponse('error', 'Payment could not be started');
+                    return $this;
+                }
+                EticTools::savePaymentToken($order_id, $payment_token);
+            }
+
             $this->response = $result;
             return $this;
         } catch (\Exception $e) {
@@ -396,12 +405,19 @@ class InternalApi
             }
 
             $order = EticTools::getOrder();
-            $process_token = $this->params['process_token'];
+            if (!$this->isOrderConfirmable($order_id, $order)) {
+                return $this->setConfirmFailedResponse();
+            }
+
+            $process_token = $this->params['process_token'] ?? '';
+            if (!is_string($process_token) || $process_token === '') {
+                return $this->setConfirmFailedResponse();
+            }
             $res = Payment::validatePayment($process_token);
 
-            if ($res['status'] != 'success') {
+            if (!is_array($res) || ($res['status'] ?? '') != 'success' || !is_array($res['data']['process'] ?? null) || !is_array($res['data']['transaction'] ?? null)) {
                 $redirect_url = EticTools::getLink('checkout/failure');
-                $this->setResponse('warning', 'Order confirmation failed', [], [
+                $this->setResponse('warning', 'Order confirmation failed', [
                     'redirect_url' => $redirect_url
                 ]);
                 return $this;
@@ -410,7 +426,7 @@ class InternalApi
             $processData = $res['data']['process'];
             $data = $res['data']['transaction'];
  
-            if ($data['status'] == 'completed' && $processData['process_status'] == 'completed') {
+            if ($data['status'] == 'completed' && $processData['process_status'] == 'completed' && $this->isPaymentMatchingOrder($order_id, $order, $processData, $data)) {
                 $transaction_amount = $processData['amount'];
                 $order_currency = $order['currency_code'];
 
@@ -446,6 +462,49 @@ class InternalApi
         } finally {
             $db->query("SELECT RELEASE_LOCK('" . $db->escape($lockName) . "')");
         }
+    }
+
+    private function isOrderConfirmable(int $order_id, $order): bool
+    {
+        if (empty($order)) {
+            return false;
+        }
+        if (!EticTools::isGarantibbvaOrder($order)) {
+            EticTools::logConfirmFailure($order_id, 'payment method');
+            return false;
+        }
+        if ((int) $order['order_status_id'] !== 0) {
+            EticTools::logConfirmFailure($order_id, 'order status');
+            return false;
+        }
+        return true;
+    }
+
+    private function isPaymentMatchingOrder(int $order_id, array $order, array $processData, array $transactionData): bool
+    {
+        if (!EticTools::isPaymentTokenOfOrder($order_id, $processData['payment_token'] ?? '')) {
+            EticTools::logConfirmFailure($order_id, 'payment token');
+            return false;
+        }
+        if (strtoupper((string) ($transactionData['currency'] ?? '')) !== strtoupper((string) $order['currency_code'])) {
+            EticTools::logConfirmFailure($order_id, 'currency');
+            return false;
+        }
+        $expected = EticTools::getOrderTotalInOrderCurrency($order);
+        $paid = (float) ($processData['amount'] ?? 0);
+        // Compare in cents and allow a 0.01 rounding difference
+        if ($expected === null || (int) round($paid * 100) < (int) round($expected * 100) - 1) {
+            EticTools::logConfirmFailure($order_id, 'amount ' . round($paid, 2) . ' < ' . ($expected === null ? '?' : round($expected, 2)));
+            return false;
+        }
+        return true;
+    }
+
+    private function setConfirmFailedResponse(): self
+    {
+        return $this->setResponse('warning', 'Order confirmation failed', [
+            'redirect_url' => EticTools::getLink('checkout/failure')
+        ]);
     }
 
     private function actionSetModuleSettings(): self
